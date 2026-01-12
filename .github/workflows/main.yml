@@ -1,0 +1,44 @@
+name: Daily Portfolio Report
+
+on:
+  schedule:
+    # Runs at 11:00 AM UTC daily
+    - cron: '0 11 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  send-report:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Create Google credentials file
+        run: echo '${{ secrets.GOOGLE_CREDENTIALS_JSON }}' > ./credentials/google-credentials.json
+
+      - name: Run portfolio report
+        run: node index.js --run-once
+        env:
+          GOOGLE_SHEETS_ID: ${{ secrets.GOOGLE_SHEETS_ID }}
+          GOOGLE_CREDENTIALS_PATH: ./credentials/google-credentials.json
+          EMAIL_HOST: smtp.gmail.com
+          EMAIL_PORT: 587
+          EMAIL_SECURE: false
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          WEEKLY_DAY: 1
+          MONTHLY_DATE: 1
+          QUARTERLY_MONTHS: 1,4,7,10
+          YEARLY_MONTH: 1
